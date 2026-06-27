@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AstroApp — Vedic &amp; Western Astrology</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="cosmic-bg" id="cosmic-bg"></div>
+
+<header>
+  <h1>✦ AstroApp ✦</h1>
+  <p class="tagline">Natal Charts &nbsp;·&nbsp; Vedic Compatibility &nbsp;·&nbsp; AI Interpretations</p>
+</header>
+
+<main>
+
+  <!-- ===== Tab Navigation ===== -->
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-tab="chart">🌟 Birth Chart</button>
+    <button class="tab-btn" data-tab="compat">💫 Compatibility</button>
+  </nav>
+
+  <!-- ===== BIRTH CHART TAB ===== -->
+  <section id="tab-chart" class="tab-panel active">
+
+    <div class="card form-card">
+      <h2>Natal Chart</h2>
+      <form id="chart-form" novalidate>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="c-name">Full Name</label>
+            <input type="text" id="c-name" name="name" placeholder="e.g. Arjun Sharma">
+          </div>
+          <div class="form-group">
+            <label for="c-place">Place of Birth *</label>
+            <input type="text" id="c-place" name="place" required placeholder="e.g. Mumbai, India">
+          </div>
+        </div>
+
+        <div class="form-row three">
+          <div class="form-group">
+            <label for="c-date">Date *</label>
+            <input type="date" id="c-date" name="date" required>
+          </div>
+          <div class="form-group">
+            <label for="c-time">Time *</label>
+            <input type="time" id="c-time" name="time" required>
+          </div>
+          <div class="form-group">
+            <label for="c-mode">Display Mode</label>
+            <select id="c-mode" name="mode">
+              <option value="sidereal" selected>Sidereal (Vedic)</option>
+              <option value="tropical">Tropical (Western)</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary" id="chart-btn">
+          <span class="btn-text">Calculate Chart</span>
+          <span class="btn-loader hidden">Calculating…</span>
+        </button>
+
+      </form>
+    </div>
+
+    <div id="chart-error" class="error-card hidden"></div>
+    <div id="chart-results"></div>
+
+  </section><!-- /#tab-chart -->
+
+  <!-- ===== COMPATIBILITY TAB ===== -->
+  <section id="tab-compat" class="tab-panel">
+
+    <div class="card form-card">
+      <h2>Guna Milan Compatibility</h2>
+
+      <div class="compat-forms">
+
+        <!-- Person 1 -->
+        <div class="person-form">
+          <h3>Person 1</h3>
+          <div class="form-group">
+            <label for="p1-name">Name</label>
+            <input type="text" id="p1-name" placeholder="Name">
+          </div>
+          <div class="form-group">
+            <label for="p1-place">Place of Birth *</label>
+            <input type="text" id="p1-place" placeholder="e.g. Delhi, India">
+          </div>
+          <div class="form-group">
+            <label for="p1-date">Date *</label>
+            <input type="date" id="p1-date">
+          </div>
+          <div class="form-group">
+            <label for="p1-time">Time *</label>
+            <input type="time" id="p1-time">
+          </div>
+        </div>
+
+        <div class="person-divider">❤</div>
+
+        <!-- Person 2 -->
+        <div class="person-form">
+          <h3>Person 2</h3>
+          <div class="form-group">
+            <label for="p2-name">Name</label>
+            <input type="text" id="p2-name" placeholder="Name">
+          </div>
+          <div class="form-group">
+            <label for="p2-place">Place of Birth *</label>
+            <input type="text" id="p2-place" placeholder="e.g. Jaipur, India">
+          </div>
+          <div class="form-group">
+            <label for="p2-date">Date *</label>
+            <input type="date" id="p2-date">
+          </div>
+          <div class="form-group">
+            <label for="p2-time">Time *</label>
+            <input type="time" id="p2-time">
+          </div>
+        </div>
+
+      </div><!-- /.compat-forms -->
+
+      <button type="button" class="btn-primary" id="compat-btn">
+        <span class="btn-text">Check Compatibility</span>
+        <span class="btn-loader hidden">Analyzing…</span>
+      </button>
+
+    </div>
+
+    <div id="compat-error" class="error-card hidden"></div>
+    <div id="compat-results"></div>
+
+  </section><!-- /#tab-compat -->
+
+</main>
+
+<footer>
+  <p>✦ AstroApp &mdash; Ephemeris by Swiss Ephemeris &nbsp;·&nbsp; AI by Claude &nbsp;·&nbsp; Vedic tables per Brihat Parashara Hora Shastra ✦</p>
+</footer>
+
+
+<script>
+/* ============================================================
+   AstroApp — Client-Side Logic
+   ============================================================ */
+
+// ---- Stars ----
+(function () {
+  const bg = document.getElementById('cosmic-bg');
+  const el = document.createElement('div');
+  el.style.cssText = 'position:absolute;inset:0;pointer-events:none;';
+  const shadows = [];
+  for (let i = 0; i < 180; i++) {
+    const x = (Math.random() * 2000).toFixed(0);
+    const y = (Math.random() * 1200).toFixed(0);
+    const op = (0.25 + Math.random() * 0.75).toFixed(2);
+    const sz = Math.random() < 0.12 ? 2 : 1;
+    shadows.push(`${x}px ${y}px ${sz}px rgba(255,255,255,${op})`);
+  }
+  el.style.boxShadow = shadows.join(',');
+  el.style.width = '1px'; el.style.height = '1px';
+  el.style.position = 'absolute'; el.style.top = '0'; el.style.left = '0';
+  bg.appendChild(el);
+})();
+
+
+// ---- Tabs ----
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+
+// ---- Utilities ----
+function $(id) { return document.getElementById(id); }
+function show(el) { el.classList.remove('hidden'); }
+function hide(el) { el.classList.add('hidden'); }
+function esc(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
+}
+
+function setLoading(btn, loading) {
+  const text   = btn.querySelector('.btn-text');
+  const loader = btn.querySelector('.btn-loader');
+  btn.disabled = loading;
+  loading ? (show(loader), hide(text)) : (hide(loader), show(text));
+}
+
+function showError(errEl, msg) {
+  errEl.textContent = msg;
+  show(errEl);
+}
+
+function parseDatetime(dateStr, timeStr) {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const [hour, minute]     = timeStr.split(':').map(Number);
+  return { year, month, day, hour, minute, second: 0 };
+}
+
+// Planet display symbols
+const PSYM = {
+  Sun:'☀', Moon:'☽', Mercury:'☿', Venus:'♀', Mars:'♂',
+  Jupiter:'♃', Saturn:'♄', Rahu:'☊', Ketu:'☋'
+};
+
+// Build a planet row <tr>
+function planetRow(name, pos, nak) {
+  const sym   = PSYM[name] || '';
+  const retro = pos.retrograde ? '<span class="retrograde">[Rx]</span>' : '';
+  const nakName  = nak ? esc(nak.name)  : '—';
+  const nakLord  = nak ? esc(nak.lord)  : '—';
+  const nakPada  = nak ? nak.pada        : '—';
+  return `<tr>
+    <td><span class="planet-sym">${sym}</span>${esc(name)} ${retro}</td>
+    <td>${esc(pos.sign)}</td>
+    <td>${pos.sign_degree.toFixed(2)}°</td>
+    <td>${nakName}</td>
+    <td>${nakLord}</td>
+    <td>${nakPada}</td>
+  </tr>`;
+}
+
+// Render interpretation text safely
+function renderInterpretation(text) {
+  const div = document.createElement('div');
+  div.className = 'interpretation-text';
+  (text || '').split(/\n\n+/).forEach(para => {
+    const p = document.createElement('p');
+    p.textContent = para.replace(/\n/g, ' ');
+    div.appendChild(p);
+  });
+  return div;
+}
+
+
+// ============================================================
+// CHART FORM
+// ============================================================
+$('chart-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form   = e.target;
+  const errEl  = $('chart-error');
+  const resEl  = $('chart-results');
+  const btn    = $('chart-btn');
+
+  hide(errEl);
+  resEl.innerHTML = '';
+  setLoading(btn, true);
+
+  const dateVal = form.date.value;
+  const timeVal = form.time.value;
+
+  if (!dateVal || !timeVal || !form.place.value.trim()) {
+    showError(errEl, 'Please fill in Date, Time, and Place of Birth.');
+    setLoading(btn, false);
+    return;
+  }
+
+  const dt   = parseDatetime(dateVal, timeVal);
+  const body = {
+    name: form.name.value.trim(),
+    place: form.place.value.trim(),
+    ...dt,
+  };
+
+  try {
+    const resp = await fetch('/api/chart', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      showError(errEl, data.error || 'An error occurred.');
+    } else {
+      renderChart(data, resEl, form.mode.value);
+      resEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  } catch (err) {
+    showError(errEl, 'Network error: ' + err.message);
+  } finally {
+    setLoading(btn, false);
+  }
+});
+
+
+function renderChart(data, container, displayMode) {
+  // We always show sidereal planets + nakshatras,
+  // but if the user chose tropical, also note it.
+  const sid    = data.sidereal;
+  const planets = sid.planets;
+  const houses  = sid.houses;
+  const naks    = data.nakshatras || {};
+  const aspects = data.aspects    || [];
+
+  // ---- Header card ----
+  const header = document.createElement('div');
+  header.className = 'card result-section';
+  header.innerHTML = `
+    <h2>${esc(data.name || 'Native')} — Natal Chart</h2>
+    <p class="meta">
+      Born: ${esc(data.birth_info.date)} &nbsp;at&nbsp; ${esc(data.birth_info.time)}<br>
+      Place: ${esc(data.birth_info.place)}
+    </p>
+    <div class="ascendant-box">
+      <span class="asc-label">Ascendant (Lagna)</span>
+      <span class="asc-value">${esc(houses.ascendant_sign)} ${houses.ascendant_degree.toFixed(2)}°</span>
+    </div>
+    &nbsp;
+    <div class="ascendant-box" style="margin-left:0.6rem">
+      <span class="asc-label">Midheaven (MC)</span>
+      <span class="asc-value">${esc(houses.mc_sign)}</span>
+    </div>`;
+  container.appendChild(header);
+
+  // ---- Planets card ----
+  const plCard = document.createElement('div');
+  plCard.className = 'card result-section';
+  let rows = '';
+  for (const [name, pos] of Object.entries(planets)) {
+    rows += planetRow(name, pos, naks[name]);
+  }
+  plCard.innerHTML = `
+    <h3>Planetary Positions <span class="badge">Sidereal · Vedic · Lahiri</span></h3>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Planet</th><th>Sign</th><th>Degree</th>
+            <th>Nakshatra</th><th>Lord</th><th>Pada</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  container.appendChild(plCard);
+
+  // ---- Houses card ----
+  const hCard = document.createElement('div');
+  hCard.className = 'card result-section';
+  let hRows = '';
+  for (const h of houses.houses) {
+    hRows += `<tr>
+      <td>House ${h.number}</td>
+      <td>${esc(h.sign)}</td>
+      <td>${h.sign_degree.toFixed(2)}°</td>
+    </tr>`;
+  }
+  hCard.innerHTML = `
+    <h3>Houses <span class="badge">Whole Sign</span></h3>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>House</th><th>Sign</th><th>Cusp Degree</th></tr></thead>
+        <tbody>${hRows}</tbody>
+      </table>
+    </div>`;
+  container.appendChild(hCard);
+
+  // ---- Aspects card (from tropical chart) ----
+  if (aspects.length > 0) {
+    const aspCard = document.createElement('div');
+    aspCard.className = 'card result-section';
+    let aspRows = '';
+    for (const a of aspects.slice(0, 10)) {
+      const phase = a.applying ? 'Applying' : 'Separating';
+      const sign  = a.orb_diff >= 0 ? '+' : '';
+      aspRows += `<tr>
+        <td>${esc(a.planet_a)}</td>
+        <td><span class="aspect-tag">${esc(a.aspect)}</span></td>
+        <td>${esc(a.planet_b)}</td>
+        <td>${sign}${a.orb_diff.toFixed(2)}°</td>
+        <td>${phase}</td>
+      </tr>`;
+    }
+    aspCard.innerHTML = `
+      <h3>Key Aspects <span class="badge">Tropical · Ptolemaic · Orb 6°</span></h3>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Planet</th><th>Aspect</th><th>Planet</th><th>Orb</th><th>Phase</th></tr></thead>
+          <tbody>${aspRows}</tbody>
+        </table>
+      </div>`;
+    container.appendChild(aspCard);
+  }
+
+  // ---- Interpretation ----
+  if (data.interpretation) {
+    const intCard = document.createElement('div');
+    intCard.className = 'card result-section interpretation-card';
+    const h3 = document.createElement('h3');
+    h3.textContent = '✨ AI Interpretation';
+    intCard.appendChild(h3);
+    intCard.appendChild(renderInterpretation(data.interpretation));
+    container.appendChild(intCard);
+  }
+}
+
+
+// ============================================================
+// COMPATIBILITY FORM
+// ============================================================
+$('compat-btn').addEventListener('click', async () => {
+  const errEl = $('compat-error');
+  const resEl = $('compat-results');
+  const btn   = $('compat-btn');
+
+  hide(errEl);
+  resEl.innerHTML = '';
+
+  const vals = {
+    p1Name:  $('p1-name').value.trim(),
+    p1Place: $('p1-place').value.trim(),
+    p1Date:  $('p1-date').value,
+    p1Time:  $('p1-time').value,
+    p2Name:  $('p2-name').value.trim(),
+    p2Place: $('p2-place').value.trim(),
+    p2Date:  $('p2-date').value,
+    p2Time:  $('p2-time').value,
+  };
+
+  if (!vals.p1Place || !vals.p1Date || !vals.p1Time ||
+      !vals.p2Place || !vals.p2Date || !vals.p2Time) {
+    showError(errEl, 'Please fill in Date, Time, and Place for both persons.');
+    return;
+  }
+
+  setLoading(btn, true);
+
+  const p1 = parseDatetime(vals.p1Date, vals.p1Time);
+  const p2 = parseDatetime(vals.p2Date, vals.p2Time);
+
+  const body = {
+    p1_name: vals.p1Name, p1_place: vals.p1Place,
+    p1_year: p1.year, p1_month: p1.month, p1_day: p1.day,
+    p1_hour: p1.hour, p1_minute: p1.minute, p1_second: 0,
+    p2_name: vals.p2Name, p2_place: vals.p2Place,
+    p2_year: p2.year, p2_month: p2.month, p2_day: p2.day,
+    p2_hour: p2.hour, p2_minute: p2.minute, p2_second: 0,
+  };
+
+  try {
+    const resp = await fetch('/api/compatibility', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      showError(errEl, data.error || 'An error occurred.');
+    } else {
+      renderCompat(data, resEl);
+      resEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  } catch (err) {
+    showError(errEl, 'Network error: ' + err.message);
+  } finally {
+    setLoading(btn, false);
+  }
+});
+
+
+function renderCompat(data, container) {
+  const milan = data.milan;
+  const pct   = milan.percentage;
+  const scoreColor = pct >= 72 ? '#4caf50' : pct >= 61 ? '#8bc34a' : pct >= 50 ? '#ff9800' : '#f44336';
+
+  // ---- Score overview card ----
+  const overCard = document.createElement('div');
+  overCard.className = 'card result-section';
+  overCard.innerHTML = `
+    <h2>Compatibility Report</h2>
+    <div class="compat-persons">
+      <div class="person-summary">
+        <span class="person-sym">👤</span>
+        <strong>${esc(data.person1.name || 'Person 1')}</strong>
+        <span class="moon-nak">☽ ${esc(milan.boy_nakshatra.name)} (pada ${milan.boy_nakshatra.pada})</span>
+      </div>
+      <div class="compat-score-circle" style="border-color:${scoreColor}">
+        <span class="score-num">${milan.total_score.toFixed(1)}</span>
+        <span class="score-max">/ ${milan.max_score}</span>
+        <span class="score-pct" style="color:${scoreColor}">${pct.toFixed(1)}%</span>
+      </div>
+      <div class="person-summary">
+        <span class="person-sym">👤</span>
+        <strong>${esc(data.person2.name || 'Person 2')}</strong>
+        <span class="moon-nak">☽ ${esc(milan.girl_nakshatra.name)} (pada ${milan.girl_nakshatra.pada})</span>
+      </div>
+    </div>
+    <p class="verdict">${esc(milan.summary)}</p>`;
+  container.appendChild(overCard);
+
+  // ---- Kootas table ----
+  const kCard = document.createElement('div');
+  kCard.className = 'card result-section';
+  let kRows = '';
+  for (const k of milan.kootas) {
+    const pctK = (k.score / k.max * 100).toFixed(0);
+    const bColor = pctK >= 70 ? '#4caf50' : pctK >= 40 ? '#ff9800' : '#f44336';
+    kRows += `<tr>
+      <td><strong>${esc(k.koota)}</strong></td>
+      <td>${k.score.toFixed(1)}</td>
+      <td>${k.max}</td>
+      <td>
+        <div class="score-bar">
+          <div class="score-bar-fill" style="width:${pctK}%;background:${bColor}"></div>
+        </div>
+      </td>
+    </tr>`;
+  }
+  kCard.innerHTML = `
+    <h3>Ashtakoot Koota Scores</h3>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Koota</th><th>Score</th><th>Max</th><th>Strength</th></tr></thead>
+        <tbody>${kRows}</tbody>
+      </table>
+    </div>`;
+  container.appendChild(kCard);
+
+  // ---- Mangal Dosha ----
+  const md = milan.mangal_dosha;
+  const mdCard = document.createElement('div');
+  mdCard.className = 'card result-section';
+  const cancel = md.mutual_cancellation
+    ? '<p class="cancellation-note">✓ Both partners have Mangal Dosha — mutual cancellation applies.</p>'
+    : '';
+  mdCard.innerHTML = `
+    <h3>Mangal Dosha (Kuja Dosha)</h3>
+    <div class="dosha-grid">
+      <div class="dosha-card ${md.boy.has_dosha ? 'has-dosha' : 'no-dosha'}">
+        <strong>${esc(data.person1.name || 'Person 1')}</strong>
+        <span>${md.boy.has_dosha ? '⚠ Dosha present' : '✓ No dosha'}</span>
+        <span class="severity">Severity: ${esc(md.boy.severity)}</span>
+      </div>
+      <div class="dosha-card ${md.girl.has_dosha ? 'has-dosha' : 'no-dosha'}">
+        <strong>${esc(data.person2.name || 'Person 2')}</strong>
+        <span>${md.girl.has_dosha ? '⚠ Dosha present' : '✓ No dosha'}</span>
+        <span class="severity">Severity: ${esc(md.girl.severity)}</span>
+      </div>
+    </div>
+    ${cancel}`;
+  container.appendChild(mdCard);
+
+  // ---- Interpretation ----
+  if (data.interpretation) {
+    const intCard = document.createElement('div');
+    intCard.className = 'card result-section interpretation-card';
+    const h3 = document.createElement('h3');
+    h3.textContent = '✨ AI Interpretation';
+    intCard.appendChild(h3);
+    intCard.appendChild(renderInterpretation(data.interpretation));
+    container.appendChild(intCard);
+  }
+}
+</script>
+
+</body>
+</html>

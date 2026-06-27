@@ -1,0 +1,460 @@
+/* ============================================================
+   AstroApp — Cosmic Dark Theme
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:          #070718;
+  --card-bg:     rgba(18, 18, 50, 0.85);
+  --gold:        #d4af37;
+  --gold-light:  #f5d76e;
+  --purple:      #7b68ee;
+  --text:        #e8e8f4;
+  --text-muted:  #8888aa;
+  --good:        #4caf50;
+  --warn:        #ff9800;
+  --bad:         #f44336;
+  --border:      rgba(212, 175, 55, 0.22);
+  --border-soft: rgba(123, 104, 238, 0.18);
+  --radius:      14px;
+  --shadow:      0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* ---- Base ---- */
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* ---- Cosmic background ---- */
+.cosmic-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(ellipse at 50% 0%, #1a1050 0%, #07071a 60%);
+  overflow: hidden;
+}
+
+/* Stars are injected by JS */
+
+/* ---- Header ---- */
+header {
+  text-align: center;
+  padding: 2.5rem 1rem 1.8rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(7, 7, 24, 0.6);
+  backdrop-filter: blur(12px);
+}
+
+header h1 {
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light), var(--gold));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 0.12em;
+  margin-bottom: 0.4rem;
+}
+
+.tagline {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  letter-spacing: 0.05em;
+}
+
+/* ---- Main / Layout ---- */
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+}
+
+/* ---- Tabs ---- */
+.tab-nav {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--text-muted);
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.75rem 1.4rem;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  letter-spacing: 0.02em;
+  margin-bottom: -1px;
+}
+
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active {
+  color: var(--gold);
+  border-bottom-color: var(--gold);
+}
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ---- Cards ---- */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.6rem;
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow);
+  margin-bottom: 1.2rem;
+}
+
+.card h2 {
+  font-size: 1.35rem;
+  color: var(--gold);
+  margin-bottom: 1.1rem;
+  letter-spacing: 0.04em;
+}
+
+.card h3 {
+  font-size: 1.05rem;
+  color: var(--gold-light);
+  margin-bottom: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* ---- Forms ---- */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
+  margin-bottom: 0.9rem;
+}
+
+.form-row.three { grid-template-columns: 1fr 1fr 1fr; }
+
+@media (max-width: 600px) {
+  .form-row, .form-row.three { grid-template-columns: 1fr; }
+}
+
+.form-group { display: flex; flex-direction: column; gap: 0.3rem; }
+
+.form-group label {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.form-group input,
+.form-group select {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 0.97rem;
+  padding: 0.55rem 0.8rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+}
+
+.form-group input::placeholder { color: var(--text-muted); }
+
+/* Date/time input colour fix on dark backgrounds */
+.form-group input[type="date"],
+.form-group input[type="time"] {
+  color-scheme: dark;
+}
+
+.form-group select option { background: #1a1a3e; }
+
+/* ---- Buttons ---- */
+.btn-primary {
+  margin-top: 0.5rem;
+  background: linear-gradient(135deg, #b8892e, var(--gold), #b8892e);
+  background-size: 200% auto;
+  border: none;
+  border-radius: 8px;
+  color: #0a0a1a;
+  cursor: pointer;
+  font-size: 0.97rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 0.7rem 2rem;
+  transition: background-position 0.3s, opacity 0.2s, transform 0.1s;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-position: right center;
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+/* ---- Compatibility form ---- */
+.compat-forms {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 1rem;
+  align-items: start;
+  margin-bottom: 1.2rem;
+}
+
+@media (max-width: 680px) {
+  .compat-forms { grid-template-columns: 1fr; }
+  .person-divider { text-align: center; }
+}
+
+.person-form h3 {
+  font-size: 1rem;
+  color: var(--gold);
+  margin-bottom: 0.8rem;
+}
+
+.person-form .form-group { margin-bottom: 0.7rem; }
+
+.person-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  color: var(--bad);
+  padding-top: 2rem;
+  opacity: 0.7;
+}
+
+/* ---- Error card ---- */
+.error-card {
+  background: rgba(244, 67, 54, 0.12);
+  border: 1px solid rgba(244, 67, 54, 0.4);
+  border-radius: var(--radius);
+  color: #ff8a80;
+  padding: 1rem 1.4rem;
+  margin-bottom: 1rem;
+  font-size: 0.94rem;
+}
+
+/* ---- Utility ---- */
+.hidden { display: none !important; }
+.badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: rgba(123, 104, 238, 0.25);
+  border: 1px solid rgba(123, 104, 238, 0.4);
+  border-radius: 20px;
+  padding: 0.15rem 0.6rem;
+  color: #b0a0ff;
+}
+
+/* ---- Result: chart header ---- */
+.result-section .meta {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+  margin-bottom: 1rem;
+}
+
+.ascendant-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  margin-top: 0.5rem;
+}
+
+.asc-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.asc-value { font-size: 1.05rem; font-weight: 700; color: var(--gold); }
+
+/* ---- Tables ---- */
+.table-wrap { overflow-x: auto; }
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.data-table th {
+  background: rgba(212, 175, 55, 0.1);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  padding: 0.55rem 0.8rem;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.data-table td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  padding: 0.55rem 0.8rem;
+  vertical-align: middle;
+}
+
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: rgba(255, 255, 255, 0.03); }
+
+.planet-sym { font-size: 1.1rem; margin-right: 0.3rem; opacity: 0.85; }
+.retrograde  { color: var(--bad); font-size: 0.82rem; font-weight: 700; margin-left: 0.2rem; }
+.aspect-tag {
+  background: rgba(123, 104, 238, 0.2);
+  border-radius: 4px;
+  color: #c0b4ff;
+  font-size: 0.8rem;
+  padding: 0.15rem 0.5rem;
+}
+
+/* ---- Score bar ---- */
+.score-bar {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  height: 8px;
+  min-width: 80px;
+  overflow: hidden;
+}
+
+.score-bar-fill {
+  border-radius: 4px;
+  height: 100%;
+  transition: width 0.5s ease;
+}
+
+/* ---- Compatibility score circle ---- */
+.compat-persons {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+  flex-wrap: wrap;
+}
+
+.person-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  text-align: center;
+  flex: 1;
+  min-width: 120px;
+}
+
+.person-sym { font-size: 1.8rem; }
+
+.moon-nak {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-top: 0.1rem;
+}
+
+.compat-score-circle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid var(--gold);
+  border-radius: 50%;
+  width: 110px;
+  height: 110px;
+  flex-shrink: 0;
+}
+
+.score-num { font-size: 1.8rem; font-weight: 700; line-height: 1; color: var(--text); }
+.score-max { font-size: 0.78rem; color: var(--text-muted); }
+.score-pct { font-size: 0.85rem; font-weight: 600; }
+
+.verdict {
+  text-align: center;
+  font-size: 0.92rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ---- Mangal Dosha ---- */
+.dosha-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 0.8rem;
+}
+
+@media (max-width: 500px) { .dosha-grid { grid-template-columns: 1fr; } }
+
+.dosha-card {
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.9rem 1.1rem;
+}
+
+.dosha-card.has-dosha {
+  background: rgba(244, 67, 54, 0.1);
+  border: 1px solid rgba(244, 67, 54, 0.35);
+}
+
+.dosha-card.no-dosha {
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.35);
+}
+
+.dosha-card strong { font-size: 0.96rem; }
+.dosha-card .severity { font-size: 0.8rem; color: var(--text-muted); }
+
+.cancellation-note {
+  font-size: 0.88rem;
+  color: var(--good);
+  background: rgba(76, 175, 80, 0.08);
+  border: 1px solid rgba(76, 175, 80, 0.25);
+  border-radius: 6px;
+  padding: 0.5rem 0.8rem;
+}
+
+/* ---- AI Interpretation ---- */
+.interpretation-card {
+  background: rgba(30, 18, 60, 0.85);
+  border-color: rgba(123, 104, 238, 0.35);
+}
+
+.interpretation-card h3 { color: #c0b4ff; }
+
+.interpretation-text {
+  color: #d0d0e8;
+  font-size: 0.97rem;
+  line-height: 1.75;
+}
+
+.interpretation-text p { margin-bottom: 0.9rem; }
+.interpretation-text p:last-child { margin-bottom: 0; }
+
+/* ---- Footer ---- */
+footer {
+  text-align: center;
+  padding: 1.5rem;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  border-top: 1px solid var(--border);
+  letter-spacing: 0.04em;
+}
