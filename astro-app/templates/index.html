@@ -21,6 +21,8 @@
   <nav class="tab-nav">
     <button class="tab-btn active" data-tab="chart">🌟 Birth Chart</button>
     <button class="tab-btn" data-tab="compat">💫 Compatibility</button>
+    <button class="tab-btn" data-tab="synastry">🔮 Synastry</button>
+    <button class="tab-btn" data-tab="transits">🌍 Transits</button>
   </nav>
 
   <!-- ===== BIRTH CHART TAB ===== -->
@@ -137,6 +139,61 @@
     <div id="compat-results"></div>
 
   </section><!-- /#tab-compat -->
+
+
+  <!-- ===== SYNASTRY TAB ===== -->
+  <section id="tab-synastry" class="tab-panel">
+    <div class="card form-card">
+      <h2>Western Synastry</h2>
+      <p class="meta">Inter-aspects between two tropical natal charts.</p>
+      <div class="compat-forms">
+        <div class="person-form">
+          <h3>Person A</h3>
+          <div class="form-group"><label>Name</label><input type="text" id="sy-a-name" placeholder="Name"></div>
+          <div class="form-group"><label>Place *</label><input type="text" id="sy-a-place" placeholder="e.g. London, UK"></div>
+          <div class="form-group"><label>Date *</label><input type="date" id="sy-a-date"></div>
+          <div class="form-group"><label>Time *</label><input type="time" id="sy-a-time"></div>
+        </div>
+        <div class="person-divider">↔</div>
+        <div class="person-form">
+          <h3>Person B</h3>
+          <div class="form-group"><label>Name</label><input type="text" id="sy-b-name" placeholder="Name"></div>
+          <div class="form-group"><label>Place *</label><input type="text" id="sy-b-place" placeholder="e.g. Paris, France"></div>
+          <div class="form-group"><label>Date *</label><input type="date" id="sy-b-date"></div>
+          <div class="form-group"><label>Time *</label><input type="time" id="sy-b-time"></div>
+        </div>
+      </div>
+      <button type="button" class="btn-primary" id="synastry-btn">
+        <span class="btn-text">Calculate Synastry</span>
+        <span class="btn-loader hidden">Analyzing…</span>
+      </button>
+    </div>
+    <div id="synastry-error" class="error-card hidden"></div>
+    <div id="synastry-results"></div>
+  </section>
+
+  <!-- ===== TRANSITS TAB ===== -->
+  <section id="tab-transits" class="tab-panel">
+    <div class="card form-card">
+      <h2>Current Transits</h2>
+      <p class="meta">Today's planetary positions aspecting your natal chart.</p>
+      <div class="form-row">
+        <div class="form-group"><label>Name</label><input type="text" id="tr-name" placeholder="Name"></div>
+        <div class="form-group"><label>Place *</label><input type="text" id="tr-place" placeholder="e.g. Mumbai, India"></div>
+      </div>
+      <div class="form-row three">
+        <div class="form-group"><label>Date *</label><input type="date" id="tr-date"></div>
+        <div class="form-group"><label>Time *</label><input type="time" id="tr-time"></div>
+        <div class="form-group"></div>
+      </div>
+      <button type="button" class="btn-primary" id="transits-btn">
+        <span class="btn-text">Get Transits</span>
+        <span class="btn-loader hidden">Calculating…</span>
+      </button>
+    </div>
+    <div id="transits-error" class="error-card hidden"></div>
+    <div id="transits-results"></div>
+  </section>
 
 </main>
 
@@ -325,6 +382,25 @@ function renderChart(data, container, displayMode) {
       <span class="asc-value">${esc(houses.mc_sign)}</span>
     </div>`;
   container.appendChild(header);
+
+  // ---- Chart wheel ----
+  const wheelCard = document.createElement('div');
+  wheelCard.className = 'card result-section';
+  const wheelTitle = document.createElement('h3');
+  wheelTitle.textContent = 'Chart Wheel';
+  const modeLabel = document.createElement('span');
+  modeLabel.className = 'badge';
+  modeLabel.textContent = displayMode === 'tropical' ? 'Tropical · Placidus' : 'Sidereal · Whole Sign · Lahiri';
+  wheelTitle.appendChild(document.createTextNode(' '));
+  wheelTitle.appendChild(modeLabel);
+  wheelCard.appendChild(wheelTitle);
+  const wheelDiv = document.createElement('div');
+  wheelDiv.id = 'chart-wheel-svg';
+  wheelCard.appendChild(wheelDiv);
+  container.appendChild(wheelCard);
+  if (typeof drawChartWheel === 'function') {
+    drawChartWheel('chart-wheel-svg', data, displayMode);
+  }
 
   // ---- Planets card ----
   const plCard = document.createElement('div');
@@ -565,6 +641,185 @@ function renderCompat(data, container) {
     intCard.appendChild(renderInterpretation(data.interpretation));
     container.appendChild(intCard);
   }
+}
+</script>
+
+
+<script src="{{ url_for('static', filename='js/chart-wheel.js') }}"></script>
+<script>
+// ============================================================
+// SYNASTRY FORM
+// ============================================================
+$('synastry-btn').addEventListener('click', async () => {
+  const errEl = $('synastry-error');
+  const resEl = $('synastry-results');
+  const btn   = $('synastry-btn');
+  hide(errEl); resEl.innerHTML = '';
+
+  const vals = {
+    aPlace: $('sy-a-place').value.trim(), aDate: $('sy-a-date').value, aTime: $('sy-a-time').value,
+    bPlace: $('sy-b-place').value.trim(), bDate: $('sy-b-date').value, bTime: $('sy-b-time').value,
+  };
+  if (!vals.aPlace||!vals.aDate||!vals.aTime||!vals.bPlace||!vals.bDate||!vals.bTime) {
+    showError(errEl,'Please fill in Date, Time, and Place for both persons.'); return;
+  }
+  setLoading(btn, true);
+  const pa = parseDatetime(vals.aDate, vals.aTime);
+  const pb = parseDatetime(vals.bDate, vals.bTime);
+  const body = {
+    p1_name:$('sy-a-name').value.trim(), p1_place:vals.aPlace,
+    p1_year:pa.year,p1_month:pa.month,p1_day:pa.day,p1_hour:pa.hour,p1_minute:pa.minute,p1_second:0,
+    p2_name:$('sy-b-name').value.trim(), p2_place:vals.bPlace,
+    p2_year:pb.year,p2_month:pb.month,p2_day:pb.day,p2_hour:pb.hour,p2_minute:pb.minute,p2_second:0,
+  };
+  try {
+    const resp = await fetch('/api/synastry',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const data = await resp.json();
+    if (!resp.ok) { showError(errEl, data.error||'Error'); }
+    else { renderSynastry(data, resEl); resEl.scrollIntoView({behavior:'smooth',block:'start'}); }
+  } catch(e) { showError(errEl,'Network error: '+e.message); }
+  finally { setLoading(btn,false); }
+});
+
+function renderSynastry(data, container) {
+  const aspects = data.inter_aspects || [];
+  const n1 = esc(data.person1.name || 'Person A');
+  const n2 = esc(data.person2.name || 'Person B');
+
+  // Summary card
+  const hCard = document.createElement('div');
+  hCard.className = 'card result-section';
+  hCard.innerHTML = `<h2>Synastry: ${n1} ↔ ${n2}</h2>
+    <p class="meta">${aspects.length} inter-aspects found within 6° orb (tropical, Ptolemaic).</p>`;
+  container.appendChild(hCard);
+
+  if (aspects.length === 0) {
+    const none = document.createElement('div');
+    none.className = 'card result-section';
+    none.innerHTML = '<p>No significant inter-aspects found within the 6° orb.</p>';
+    container.appendChild(none);
+    return;
+  }
+
+  // Group by aspect type
+  const byType = {};
+  for (const a of aspects) {
+    (byType[a.aspect] = byType[a.aspect]||[]).push(a);
+  }
+
+  const aspCard = document.createElement('div');
+  aspCard.className = 'card result-section';
+  let rows = '';
+  for (const a of aspects.slice(0,25)) {
+    const phase = a.applying ? 'Applying' : 'Separating';
+    rows += `<tr>
+      <td><strong>${esc(a.planet_a)}</strong> <span class="meta">(A)</span></td>
+      <td><span class="aspect-tag">${esc(a.aspect)}</span></td>
+      <td><strong>${esc(a.planet_b)}</strong> <span class="meta">(B)</span></td>
+      <td>${a.orb_diff>=0?'+':''}${a.orb_diff.toFixed(2)}°</td>
+      <td>${phase}</td>
+    </tr>`;
+  }
+  aspCard.innerHTML = `<h3>Inter-Aspects <span class="badge">Tropical · Ptolemaic · Orb 6°</span></h3>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Person A</th><th>Aspect</th><th>Person B</th><th>Orb</th><th>Phase</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  container.appendChild(aspCard);
+}
+
+// ============================================================
+// TRANSITS FORM
+// ============================================================
+$('transits-btn').addEventListener('click', async () => {
+  const errEl = $('transits-error');
+  const resEl = $('transits-results');
+  const btn   = $('transits-btn');
+  hide(errEl); resEl.innerHTML = '';
+
+  const place = $('tr-place').value.trim();
+  const date  = $('tr-date').value;
+  const time  = $('tr-time').value;
+  if (!place||!date||!time) { showError(errEl,'Please fill in Date, Time, and Place.'); return; }
+
+  setLoading(btn, true);
+  const dt   = parseDatetime(date, time);
+  const body = { name:$('tr-name').value.trim(), place, ...dt };
+  try {
+    const resp = await fetch('/api/transits',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const data = await resp.json();
+    if (!resp.ok) { showError(errEl, data.error||'Error'); }
+    else { renderTransits(data, resEl); resEl.scrollIntoView({behavior:'smooth',block:'start'}); }
+  } catch(e) { showError(errEl,'Network error: '+e.message); }
+  finally { setLoading(btn,false); }
+});
+
+function renderTransits(data, container) {
+  const aspects = data.transit_aspects || [];
+  const current = data.current || {};
+
+  const hCard = document.createElement('div');
+  hCard.className = 'card result-section';
+  hCard.innerHTML = `<h2>Transits for ${esc(data.name||'Native')}</h2>
+    <p class="meta">Current sky as of ${esc(current.datetime||'')} · ${aspects.length} active transit aspects.</p>`;
+  container.appendChild(hCard);
+
+  // Current sky positions
+  if (current.planets) {
+    const skyCard = document.createElement('div');
+    skyCard.className = 'card result-section';
+    let rows = '';
+    for (const [name, pos] of Object.entries(current.planets)) {
+      const sym = PSYM[name]||'';
+      const rx  = pos.retrograde ? '<span class="retrograde">[Rx]</span>' : '';
+      rows += `<tr>
+        <td><span class="planet-sym">${sym}</span>${esc(name)} ${rx}</td>
+        <td>${esc(pos.sign)}</td>
+        <td>${pos.sign_degree.toFixed(2)}°</td>
+      </tr>`;
+    }
+    skyCard.innerHTML = `<h3>Current Sky <span class="badge">Tropical</span></h3>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Planet</th><th>Sign</th><th>Degree</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+    container.appendChild(skyCard);
+  }
+
+  // Transit aspects
+  if (aspects.length === 0) {
+    const none = document.createElement('div');
+    none.className = 'card result-section';
+    none.innerHTML = '<p>No transit aspects within 6° orb at this time.</p>';
+    container.appendChild(none);
+    return;
+  }
+
+  const aspCard = document.createElement('div');
+  aspCard.className = 'card result-section';
+  let rows = '';
+  for (const a of aspects.slice(0, 20)) {
+    const phase = a.applying ? '→ Applying' : '← Separating';
+    rows += `<tr>
+      <td><strong>${esc(a.transit_planet)}</strong> <span class="meta">transit</span></td>
+      <td><span class="aspect-tag">${esc(a.aspect)}</span></td>
+      <td><strong>${esc(a.natal_planet)}</strong> <span class="meta">natal</span></td>
+      <td>${a.orb_diff>=0?'+':''}${a.orb_diff.toFixed(2)}°</td>
+      <td>${phase}</td>
+    </tr>`;
+  }
+  aspCard.innerHTML = `<h3>Transit Aspects <span class="badge">Natal Tropical · Orb 6°</span></h3>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Transit</th><th>Aspect</th><th>Natal</th><th>Orb</th><th>Phase</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  container.appendChild(aspCard);
 }
 </script>
 

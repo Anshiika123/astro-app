@@ -29,6 +29,8 @@ from ephemeris.nakshatras import get_all_planet_nakshatras
 from ephemeris.aspects import get_aspects
 from guna_milan.kootas import calculate_guna_milan
 from geo import get_location_data, get_tz_offset_hours
+from ephemeris.synastry import get_synastry_aspects
+from ephemeris.transits import get_transits_for_chart
 from llm.interpreter import interpret_natal_chart, interpret_compatibility
 
 app = Flask(__name__)
@@ -168,6 +170,62 @@ def api_compatibility():
     except Exception:
         app.logger.exception("Compatibility error")
         return jsonify({"error": "Internal calculation error — check server logs."}), 500
+
+
+@app.route("/api/synastry", methods=["POST"])
+def api_synastry():
+    try:
+        data = request.get_json(force=True) or {}
+        p1 = _parse_birth(data, prefix="p1_")
+        p2 = _parse_birth(data, prefix="p2_")
+        if not p1["place"] or not p2["place"]:
+            return jsonify({"error": "Place of birth is required for both persons."}), 400
+
+        pay1 = _compute(p1)
+        pay2 = _compute(p2)
+
+        inter_aspects = get_synastry_aspects(
+            pay1["tropical"]["planets"],
+            pay2["tropical"]["planets"],
+        )
+
+        return jsonify({
+            "person1":       {"name": p1["name"], "location": pay1["location"]},
+            "person2":       {"name": p2["name"], "location": pay2["location"]},
+            "tropical1":     pay1["tropical"],
+            "tropical2":     pay2["tropical"],
+            "inter_aspects": inter_aspects,
+        })
+    except (KeyError, ValueError, TypeError) as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception:
+        app.logger.exception("Synastry error")
+        return jsonify({"error": "Internal calculation error."}), 500
+
+
+@app.route("/api/transits", methods=["POST"])
+def api_transits():
+    try:
+        data = request.get_json(force=True) or {}
+        birth = _parse_birth(data)
+        if not birth["place"]:
+            return jsonify({"error": "Place of birth is required."}), 400
+
+        payload = _compute(birth)
+        transits = get_transits_for_chart(payload["tropical"])
+
+        return jsonify({
+            "name":          birth["name"],
+            "natal":         payload["tropical"],
+            "current":       transits["current"],
+            "transit_aspects": transits["aspects"],
+        })
+    except (KeyError, ValueError, TypeError) as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception:
+        app.logger.exception("Transits error")
+        return jsonify({"error": "Internal calculation error."}), 500
+
 
 
 # ---------------------------------------------------------------------------
